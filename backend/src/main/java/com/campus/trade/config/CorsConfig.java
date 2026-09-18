@@ -1,4 +1,4 @@
-﻿package com.campus.trade.config;
+package com.campus.trade.config;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;

@@ -1,4 +1,4 @@
-﻿package com.campus.trade.controller;
+package com.campus.trade.controller;
 
 import com.campus.trade.entity.Product;
 import com.campus.trade.repository.ProductRepository;

@@ -1,4 +1,4 @@
-﻿package com.campus.trade.repository;
+package com.campus.trade.repository;
 
 import com.campus.trade.entity.Product;
 import java.util.List;

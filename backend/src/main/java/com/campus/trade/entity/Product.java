@@ -1,4 +1,4 @@
-﻿package com.campus.trade.entity;
+package com.campus.trade.entity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;

@@ -1,0 +1,31 @@
+﻿server:
+  port: ${PORT:8080}
+
+spring:
+  application:
+    name: campus-trade
+  datasource:
+    url: ${DATABASE_URL:jdbc:postgresql://localhost:5432/campus}
+    username: ${DATABASE_USER:postgres}
+    password: ${DATABASE_PASSWORD:postgres}
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    open-in-view: false
+  jackson:
+    time-zone: Asia/Shanghai
+    date-format: yyyy-MM-dd HH:mm:ss
+
+app:
+  cors:
+    allowed-origins: ${FRONTEND_URL:http://localhost:5173}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: never

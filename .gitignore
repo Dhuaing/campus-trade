@@ -1,0 +1,41 @@
+# ===== 通用 =====
+*.log
+*.tmp
+.DS_Store
+Thumbs.db
+
+# ===== 环境变量（含密钥，不入库）=====
+.env
+.env.local
+.env.*.local
+# 保留 .env.production 的示例由代码内置，真实密钥走平台注入
+
+# ===== 前端 Node =====
+node_modules/
+frontend/dist/
+frontend/.vite/
+frontend/*.local
+npm-debug.log*
+yarn-debug.log*
+pnpm-debug.log*
+
+# ===== 后端 Java / Maven =====
+target/
+backend/target/
+*.class
+*.jar
+*.war
+!.mvn/wrapper/maven-wrapper.jar
+.mvn/timing.properties
+
+# ===== IDE =====
+.idea/
+*.iml
+.vscode/*
+!.vscode/extensions.json
+*.swp
+
+# ===== 系统/测试残留 =====
+__perm_test__/
+__wtest__/
+test-write.txt

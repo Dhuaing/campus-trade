@@ -1,82 +1,95 @@
-# 校园二手交易平台（Campus Trade）
+# Campus Trade — 校园二手交易平台
 
-> 面向高校学生的二手物品交易平台 · 作品集项目
-> 技术栈：Vue3 + TypeScript + Vite ｜ Spring Boot + PostgreSQL
+> 求职作品集项目 · 前后端分离 · 全栈云端部署
 
-## ✨ 项目简介
+## 在线演示
 
-为高校学生提供二手物品发布、浏览、下单与线下交易的一站式平台，聚焦校园场景（学号认证、校内面交），降低信息差与交易成本。
+| 端点 | 地址 |
+|---|---|
+| 前端站点 | https://campus-trade-app.netlify.app |
+| REST API | https://campus-trade-production-a0ef.up.railway.app/api/products |
+| 健康检查 | https://campus-trade-production-a0ef.up.railway.app/actuator/health |
 
-## 🧱 技术架构
+## 功能特性
 
-| 层 | 技术选型 |
-|----|---------|
+- 商品列表：按分类浏览（教材书籍 / 数码电子 / 生活用品 / 运动户外）
+- 商品详情：现价、原价对比、卖家认证信息
+- 种子数据：数据库表为空时自动写入 6 条示例商品（`DataInitializer`）
+
+## 技术栈
+
+| 层 | 技术 |
+|---|---|
 | 前端 | Vue 3 + TypeScript + Vite + Vue Router |
-| 后端 | Spring Boot 3 + Spring Web + Spring Data JPA |
+| 后端 | Spring Boot 3.2 (Java 17)、Spring Data JPA、Validation、Actuator |
 | 数据库 | PostgreSQL |
-| 实时通信 | WebSocket（IM 聊天，规划中） |
-| 部署 | 前端 Vercel · 后端 Railway · 数据库 Railway PostgreSQL |
+| 部署 | Docker 多阶段构建 · Railway（后端 + 数据库）· Netlify（前端，CI/CD 随 push 自动构建） |
 
-## 📂 目录结构
+## 架构
 
-```
-campus-trade/
-├── frontend/        # Vue3 前端
-│   ├── src/
-│   ├── vercel.json
-│   └── package.json
-├── backend/         # Spring Boot 后端
-│   ├── src/main/java/com/campus/trade/
-│   ├── Dockerfile
-│   └── pom.xml
-└── README.md
+```mermaid
+flowchart LR
+    A[浏览器] -->|HTTPS| B[Netlify\nVue 3 SPA]
+    B -->|REST /api/products| C[Railway\nSpring Boot 3\nDocker 容器]
+    C -->|JDBC| D[(Railway\nPostgreSQL)]
 ```
 
-## 🚀 本地开发
+## 目录结构
 
-### 环境要求
-- Node.js ≥ 18
-- JDK 17+
-- Maven 3.8+
-- PostgreSQL 14+
+```
+├── backend/                # Spring Boot 后端（Railway 部署根目录）
+│   ├── Dockerfile          # maven 构建 → JRE 17 运行 多阶段镜像
+│   ├── pom.xml
+│   └── src/main/java/com/campus/trade/
+│       ├── controller/     # ProductController（REST 接口）
+│       ├── entity/         # Product 实体
+│       ├── repository/     # Spring Data JPA
+│       ├── config/         # CORS 配置、种子数据初始化
+│       └── CampusTradeApplication.java
+└── frontend/               # Vue 3 前端（Netlify 部署根目录）
+    ├── netlify.toml        # 构建命令 + SPA 路由回退
+    └── src/                # Home / ProductDetail 页面
+```
 
-### 启动后端
+## API 一览
+
+| 方法 | 路径 | 说明 |
+|---|---|---|
+| GET | `/api/products` | 商品列表 |
+| GET | `/api/products/{id}` | 商品详情 |
+| GET | `/actuator/health` | 健康检查（Railway 部署探针） |
+
+## 本地运行
+
+后端（需本地 PostgreSQL 或使用环境变量指向远程库）：
+
 ```bash
 cd backend
+DATABASE_URL=jdbc:postgresql://localhost:5432/campus \
+DATABASE_USER=postgres DATABASE_PASSWORD=postgres \
 mvn spring-boot:run
-# 默认 http://localhost:8080
 ```
 
-### 启动前端
+前端：
+
 ```bash
 cd frontend
 npm install
-npm run dev
-# 默认 http://localhost:5173
+npm run dev      # http://localhost:5173
 ```
 
-## 🔌 接口示例
+## 关键配置说明
 
-| 方法 | 路径 | 说明 |
-|------|------|------|
-| GET | `/api/products` | 在售商品列表 |
-| GET | `/api/products/{id}` | 商品详情 |
-| GET | `/actuator/health` | 健康检查 |
+| 变量 | 作用 | 备注 |
+|---|---|---|
+| `DATABASE_URL` / `DATABASE_USER` / `DATABASE_PASSWORD` | 后端数据源 | Railway 中引用 Postgres 服务变量 |
+| `PGHOST` / `PGPORT` / `PGDATABASE` / `PGUSER` / `PGPASSWORD` | Railway Postgres 注入 | 通过 `${{Postgres.*}}` 引用 |
+| `VITE_API_BASE_URL` | 前端构建期注入的 API 地址 | Netlify 环境变量 |
+| `FRONTEND_URL` | 后端 CORS 允许来源 | 与前端域名保持一致 |
+| `PORT` | 容器监听端口 | Railway 自动注入，Spring 读取 `${PORT:8080}` |
 
-## ☁️ 线上部署
+## 部署要点
 
-- 前端：Vercel（关联 GitHub，push 自动部署）
-- 后端 + 数据库：Railway（Dockerfile 构建，端口读 `$PORT`）
-
-## 📌 当前进度
-
-- [x] 项目骨架搭建
-- [x] 商品列表 / 详情查询闭环
-- [ ] 用户登录 / 学号认证
-- [ ] 发布商品
-- [ ] 下单流程
-- [ ] IM 实时聊天
-
----
-
-> 本项目为个人作品集，仅用于技术演示，不面向真实市场运营。
+- **后端（Railway）**：Root Directory 设为 `backend`，Railpack 自动检测 Dockerfile 多阶段构建；服务变量通过 `${{Postgres.PGHOST}}` 等引用数据库实例，实现同项目内网互通。
+- **前端（Netlify）**：Root Directory 设为 `frontend`，构建命令 `npm run build`，发布目录 `dist`；`netlify.toml` 配置 SPA 回退，保证 `/product/:id` 直链可访问。
+- **CORS**：后端从 `FRONTEND_URL` 读取允许的来源，部署前端后回填即可完成双向打通。

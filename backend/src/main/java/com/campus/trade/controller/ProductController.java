@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -97,6 +98,28 @@ public class ProductController {
         product.setCreator(creator);
         Product saved = productRepository.save(product);
         return ResponseEntity.status(HttpStatus.CREATED).body(saved);
+    }
+
+    /** 标记商品为已售（仅本人可操作，status 设为 SOLD） */
+    @PutMapping("/{id}/sold")
+    public ResponseEntity<?> markSold(@PathVariable Long id, Authentication authentication) {
+        if (authentication == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(java.util.Map.of("message", "请先登录"));
+        }
+        Long userId = (Long) authentication.getPrincipal();
+        Product product = productRepository.findWithCreatorById(id).orElse(null);
+        if (product == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(java.util.Map.of("message", "商品不存在"));
+        }
+        if (product.getCreator() == null || !userId.equals(product.getCreator().getId())) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(java.util.Map.of("message", "无权操作他人商品"));
+        }
+        product.setStatus("SOLD");
+        productRepository.save(product);
+        return ResponseEntity.ok(java.util.Map.of("id", product.getId(), "status", "SOLD"));
     }
 
     /** 下架自己的商品（软删除，status 设为 REMOVED，仅本人可操作） */

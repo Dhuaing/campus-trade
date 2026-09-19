@@ -89,6 +89,18 @@ export async function deleteProduct(id: number): Promise<void> {
   if (!res.ok) throw new Error(`删除失败: ${res.status}`)
 }
 
+/** 标记商品已售 */
+export async function markProductSold(id: number): Promise<{ id: number; status: string }> {
+  const res = await fetch(`${baseURL}/api/products/${id}/sold`, {
+    method: 'PUT',
+    headers: authHeaders()
+  })
+  if (res.status === 401) throw new Error('请先登录')
+  if (res.status === 403) throw new Error('无权操作他人商品')
+  if (!res.ok) throw new Error(`操作失败: ${res.status}`)
+  return res.json()
+}
+
 /** 注册 */
 export async function register(input: {
   username: string

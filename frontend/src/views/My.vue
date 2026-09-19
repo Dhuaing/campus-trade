@@ -36,6 +36,7 @@
             <div class="p-price">¥{{ p.price }}</div>
           </div>
           <span class="p-status" :class="'st-' + p.status">{{ statusText(p.status) }}</span>
+          <button v-if="p.status === 'ON_SALE'" class="btn warn" @click="onSold(p)">已售</button>
           <button v-if="p.status === 'ON_SALE'" class="btn danger" @click="onDelete(p)">下架</button>
         </div>
       </div>
@@ -47,7 +48,7 @@
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuth } from '@/composables/useAuth'
-import { getMyProducts, deleteProduct, type Product } from '@/api/request'
+import { getMyProducts, deleteProduct, markProductSold, type Product } from '@/api/request'
 
 const router = useRouter()
 const { user, isLoggedIn, logout } = useAuth()
@@ -73,6 +74,16 @@ async function loadMine() {
     myProducts.value = []
   } finally {
     loading.value = false
+  }
+}
+
+async function onSold(p: Product) {
+  if (!confirm(`确认「${p.title}」已售出？`)) return
+  try {
+    await markProductSold(p.id)
+    p.status = 'SOLD'
+  } catch (e) {
+    alert((e as Error).message)
   }
 }
 
@@ -109,6 +120,7 @@ onMounted(loadMine)
 .btn.primary { background: var(--color-primary); color: #fff; }
 .btn.ghost { background: #f0f1f3; color: var(--color-text); }
 .btn.danger { background: #ff5252; color: #fff; padding: 6px 14px; font-size: 13px; }
+.btn.warn { background: #ffa726; color: #fff; padding: 6px 14px; font-size: 13px; }
 
 .grid {
   display: grid;

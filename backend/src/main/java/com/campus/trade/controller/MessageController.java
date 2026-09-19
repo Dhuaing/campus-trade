@@ -50,18 +50,20 @@ public class MessageController {
         }
         Long userId = (Long) authentication.getPrincipal();
         List<Message> messages = messageRepository.findInboxByUserId(userId);
-        List<Map<String, Object>> list = messages.stream().map(m -> Map.<String, Object>of(
-                "id", m.getId(),
-                "fromUser", Map.of(
-                        "id", m.getFromUser().getId(),
-                        "nickname", m.getFromUser().getNickname()
-                ),
-                "productId", m.getProduct() == null ? null : m.getProduct().getId(),
-                "productTitle", m.getProduct() == null ? null : m.getProduct().getTitle(),
-                "content", m.getContent(),
-                "isRead", m.getIsRead(),
-                "createdAt", m.getCreatedAt()
-        )).toList();
+        List<Map<String, Object>> list = messages.stream().map(m -> {
+            Map<String, Object> item = new java.util.HashMap<>();
+            item.put("id", m.getId());
+            item.put("fromUser", Map.of(
+                    "id", m.getFromUser().getId(),
+                    "nickname", m.getFromUser().getNickname()
+            ));
+            item.put("productId", m.getProduct() == null ? null : m.getProduct().getId());
+            item.put("productTitle", m.getProduct() == null ? null : m.getProduct().getTitle());
+            item.put("content", m.getContent());
+            item.put("isRead", m.getIsRead());
+            item.put("createdAt", m.getCreatedAt());
+            return item;
+        }).toList();
         long unread = messageRepository.countByToUserIdAndIsReadFalse(userId);
         return ResponseEntity.ok(Map.of("messages", list, "unread", unread));
     }

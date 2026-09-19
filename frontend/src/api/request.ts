@@ -32,6 +32,16 @@ export interface Message {
   createdAt: string
 }
 
+export interface ConversationMessage {
+  id: number
+  fromUserId: number
+  fromUserNickname: string
+  toUserId: number
+  content: string
+  isRead: boolean
+  createdAt: string
+}
+
 export interface ProductInput {
   title: string
   description?: string
@@ -171,4 +181,13 @@ export async function sendMessage(input: {
   if (res.status === 401) throw new Error('请先登录')
   if (!res.ok) throw new Error(`发送失败: ${res.status}`)
   return res.json()
+}
+
+/** 获取与指定用户的会话消息列表 */
+export async function getConversation(userId: number): Promise<ConversationMessage[]> {
+  const res = await fetch(`${baseURL}/api/messages/conversation/${userId}`, { headers: authHeaders() })
+  if (res.status === 401) throw new Error('请先登录')
+  if (!res.ok) throw new Error(`加载会话失败: ${res.status}`)
+  const data = await res.json()
+  return data.messages
 }

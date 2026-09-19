@@ -15,6 +15,7 @@ import java.util.Map;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -118,4 +119,26 @@ public class MessageController {
             Long productId,
             @NotBlank @Size(max = 1000) String content
     ) {}
+
+    /** 获取与指定用户的完整会话（按时间正序），并将对方发来的未读消息标记为已读 */
+    @GetMapping("/conversation/{userId}")
+    @Transactional
+    public ResponseEntity<?> conversation(@PathVariable Long userId, Authentication authentication) {
+        if (authentication == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+        Long me = (Long) authentication.getPrincipal();
+        messageRepository.markConversationRead(userId, me);
+        List<Message> messages = messageRepository.findConversation(me, userId);
+        List<Map<String, Object>> list = messages.stream().map(m -> Map.<String, Object>of(
+                "id", m.getId(),
+                "fromUserId", m.getFromUser().getId(),
+                "fromUserNickname", m.getFromUser().getNickname(),
+                "toUserId", m.getToUser().getId(),
+                "content", m.getContent(),
+                "isRead", m.getIsRead(),
+                "createdAt", m.getCreatedAt()
+        )).toList();
+        return ResponseEntity.ok(Map.of("messages", list));
+    }
 }

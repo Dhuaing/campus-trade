@@ -30,9 +30,11 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 import { getMessages, markMessageRead, type Message } from '@/api/request'
 import { useAuth } from '@/composables/useAuth'
 
+const router = useRouter()
 const { isLoggedIn, refreshUnread } = useAuth()
 const list = ref<Message[]>([])
 const loading = ref(true)
@@ -51,14 +53,16 @@ onMounted(async () => {
 })
 
 async function onRead(m: Message) {
-  if (m.isRead) return
-  try {
-    await markMessageRead(m.id)
-    m.isRead = true
-    await refreshUnread()
-  } catch {
-    // 忽略已读失败，不影响展示
+  if (!m.isRead) {
+    try {
+      await markMessageRead(m.id)
+      m.isRead = true
+      await refreshUnread()
+    } catch {
+      // 忽略已读失败
+    }
   }
+  router.push({ name: 'chat', params: { userId: m.fromUser.id } })
 }
 </script>
 

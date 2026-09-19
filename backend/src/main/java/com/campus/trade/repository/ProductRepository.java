@@ -27,7 +27,7 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
             "p.created_at DESC",
             nativeQuery = true)
     List<Product> searchMulti(@Param("status") String status,
-                              @Param("keywords") List<String> keywords);
+                              @Param("keywords") String[] keywords);
 
     @EntityGraph(attributePaths = "creator")
     @Query("SELECT p FROM Product p WHERE p.id = :id")

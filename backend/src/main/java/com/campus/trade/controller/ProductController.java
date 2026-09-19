@@ -48,7 +48,7 @@ public class ProductController {
                     .map(s -> "%" + s + "%")
                     .toList();
             if (!keywords.isEmpty()) {
-                return productRepository.searchMulti("ON_SALE", keywords);
+                return productRepository.searchMulti("ON_SALE", keywords.toArray(String[]::new));
             }
         }
         return productRepository.findByStatusOrderByCreatedAtDesc("ON_SALE");

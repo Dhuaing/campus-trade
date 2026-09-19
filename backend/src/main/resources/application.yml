@@ -20,6 +20,9 @@ spring:
 app:
   cors:
     allowed-origins: ${FRONTEND_URL:http://localhost:5173}
+  jwt:
+    secret: ${JWT_SECRET:campus-trade-secret-key-for-jwt-signing-please-change-in-production-2026}
+    expiration-hours: ${JWT_EXPIRATION_HOURS:168}
 
 management:
   endpoints:

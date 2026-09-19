@@ -22,13 +22,28 @@
         <div class="seller">
           <div class="avatar">👤</div>
           <div>
-            <div class="seller-name">校园卖家</div>
+            <div class="seller-name">{{ sellerName }}</div>
             <div class="seller-sub">已通过学号认证</div>
           </div>
         </div>
         <div class="actions">
-          <button class="btn ghost">联系卖家</button>
-          <button class="btn primary">立即下单</button>
+          <button class="btn ghost" @click="openContact">联系卖家</button>
+          <button class="btn primary" @click="openContact">立即下单</button>
+        </div>
+      </div>
+    </div>
+
+    <div v-if="contactOpen" class="modal-mask" @click.self="contactOpen = false">
+      <div class="modal">
+        <h3>联系卖家</h3>
+        <textarea v-model="contactMsg" rows="4" placeholder="请输入你想说的话..." />
+        <div v-if="contactError" class="error-tip">{{ contactError }}</div>
+        <div v-if="contactSuccess" class="success-tip">消息已发送！</div>
+        <div class="modal-actions">
+          <button class="btn ghost" @click="contactOpen = false">取消</button>
+          <button class="btn primary" @click="sendMessage" :disabled="sending">
+            {{ sending ? '发送中...' : '发送' }}
+          </button>
         </div>
       </div>
     </div>
@@ -36,14 +51,26 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
-import { useRoute } from 'vue-router'
-import { getProduct, type Product } from '@/api/request'
+import { ref, computed, onMounted } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import { getProduct, sendMessage, type Product } from '@/api/request'
+import { useAuth } from '@/composables/useAuth'
 
 const route = useRoute()
+const router = useRouter()
+const { isLoggedIn } = useAuth()
 const product = ref<Product | null>(null)
 const loading = ref(true)
 const error = ref('')
+
+const sellerName = computed(() => product.value?.creator?.nickname || '校园卖家')
+const sellerId = computed(() => product.value?.creator?.id)
+
+const contactOpen = ref(false)
+const contactMsg = ref('')
+const contactError = ref('')
+const contactSuccess = ref(false)
+const sending = ref(false)
 
 onMounted(async () => {
   const id = Number(route.params.id)
@@ -55,6 +82,43 @@ onMounted(async () => {
     loading.value = false
   }
 })
+
+function openContact() {
+  if (!isLoggedIn.value) {
+    router.push({ name: 'login', query: { redirect: route.fullPath } })
+    return
+  }
+  contactMsg.value = ''
+  contactError.value = ''
+  contactSuccess.value = false
+  contactOpen.value = true
+}
+
+async function sendMessage() {
+  contactError.value = ''
+  if (!contactMsg.value.trim()) {
+    contactError.value = '请输入消息内容'
+    return
+  }
+  if (!sellerId.value) {
+    contactError.value = '无法获取卖家信息'
+    return
+  }
+  sending.value = true
+  try {
+    await sendMessage({
+      toUserId: sellerId.value,
+      productId: product.value!.id,
+      content: contactMsg.value.trim()
+    })
+    contactSuccess.value = true
+    setTimeout(() => { contactOpen.value = false }, 1000)
+  } catch (e) {
+    contactError.value = e instanceof Error ? e.message : '发送失败'
+  } finally {
+    sending.value = false
+  }
+}
 </script>
 
 <style scoped>
@@ -86,11 +150,31 @@ onMounted(async () => {
 .seller-name { font-weight: 500; }
 .seller-sub { font-size: 12px; color: var(--color-text-sub); }
 .actions { display: flex; gap: 12px; margin-top: 20px; }
-.btn { flex: 1; padding: 12px; border-radius: 999px; font-size: 15px; border: none; }
+.btn { flex: 1; padding: 12px; border-radius: 999px; font-size: 15px; border: none; cursor: pointer; }
 .btn.primary { background: var(--color-primary); color: #fff; }
 .btn.ghost { background: #f0f1f3; color: var(--color-text); }
+.btn:disabled { opacity: 0.6; }
 .tip { text-align: center; color: var(--color-text-sub); padding: 40px; }
 .error { color: var(--color-price); }
+
+.modal-mask {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.4);
+  display: flex; align-items: center; justify-content: center; z-index: 100;
+}
+.modal {
+  background: #fff; border-radius: var(--radius);
+  padding: 24px; width: 90%; max-width: 420px;
+}
+.modal h3 { font-size: 18px; margin-bottom: 12px; }
+.modal textarea {
+  width: 100%; padding: 10px 12px;
+  border: 1px solid #e3e5e8; border-radius: 8px;
+  font-size: 14px; box-sizing: border-box; resize: vertical;
+  font-family: inherit;
+}
+.error-tip { color: var(--color-price); font-size: 13px; margin: 8px 0; }
+.success-tip { color: var(--color-primary); font-size: 13px; margin: 8px 0; }
+.modal-actions { display: flex; gap: 12px; margin-top: 12px; }
 
 @media (max-width: 720px) {
   .panel { grid-template-columns: 1fr; }

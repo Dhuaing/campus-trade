@@ -2,9 +2,12 @@ package com.campus.trade.entity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
 import java.math.BigDecimal;
@@ -43,6 +46,11 @@ public class Product {
     @Column(length = 20)
     private String status = "ON_SALE";
 
+    /** 发布者（可为空，兼容历史数据） */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "creator_id")
+    private User creator;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
@@ -72,6 +80,8 @@ public class Product {
     public void setCategory(String category) { this.category = category; }
     public String getStatus() { return status; }
     public void setStatus(String status) { this.status = status; }
+    public User getCreator() { return creator; }
+    public void setCreator(User creator) { this.creator = creator; }
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
 }

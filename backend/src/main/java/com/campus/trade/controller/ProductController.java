@@ -1,7 +1,9 @@
 package com.campus.trade.controller;
 
 import com.campus.trade.entity.Product;
+import com.campus.trade.entity.User;
 import com.campus.trade.repository.ProductRepository;
+import com.campus.trade.repository.UserRepository;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -11,6 +13,7 @@ import java.math.BigDecimal;
 import java.util.List;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -26,9 +29,12 @@ import org.springframework.web.bind.annotation.RestController;
 public class ProductController {
 
     private final ProductRepository productRepository;
+    private final UserRepository userRepository;
 
-    public ProductController(ProductRepository productRepository) {
+    public ProductController(ProductRepository productRepository,
+                             UserRepository userRepository) {
         this.productRepository = productRepository;
+        this.userRepository = userRepository;
     }
 
     /** 在售商品列表（按发布时间倒序） */
@@ -40,20 +46,32 @@ public class ProductController {
     /** 商品详情 */
     @GetMapping("/{id}")
     public ResponseEntity<Product> detail(@PathVariable Long id) {
-        return productRepository.findById(id)
+        return productRepository.findWithCreatorById(id)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
 
-    /** 发布商品 */
+    /** 发布商品（需登录） */
     @PostMapping
-    public ResponseEntity<Product> create(@Valid @RequestBody CreateProductRequest req) {
+    public ResponseEntity<?> create(@Valid @RequestBody CreateProductRequest req,
+                                    Authentication authentication) {
+        if (authentication == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(java.util.Map.of("message", "请先登录"));
+        }
+        Long userId = (Long) authentication.getPrincipal();
+        User creator = userRepository.findById(userId).orElse(null);
+        if (creator == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(java.util.Map.of("message", "用户不存在"));
+        }
         Product product = new Product();
         product.setTitle(req.title());
         product.setDescription(req.description());
         product.setPrice(req.price());
         product.setOriginalPrice(req.originalPrice());
         product.setCategory(req.category());
+        product.setCreator(creator);
         Product saved = productRepository.save(product);
         return ResponseEntity.status(HttpStatus.CREATED).body(saved);
     }

@@ -6,8 +6,8 @@
         <nav class="nav">
           <router-link to="/">首页</router-link>
           <router-link to="/publish">发布</router-link>
-          <a href="javascript:;">消息</a>
-          <a href="javascript:;">我的</a>
+          <router-link to="/messages">消息</router-link>
+          <router-link to="/my">我的</router-link>
         </nav>
       </div>
     </header>
@@ -18,6 +18,14 @@
 </template>
 
 <script setup lang="ts">
+import { onMounted } from 'vue'
+import { useAuth } from '@/composables/useAuth'
+
+const { restore } = useAuth()
+
+onMounted(() => {
+  restore()
+})
 </script>
 
 <style scoped>

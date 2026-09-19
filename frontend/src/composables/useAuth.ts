@@ -1,7 +1,8 @@
 import { ref, computed } from 'vue'
-import { getMe, login as apiLogin, register as apiRegister, type UserInfo } from '@/api/request'
+import { getMe, getMessages, login as apiLogin, register as apiRegister, type UserInfo } from '@/api/request'
 
 const user = ref<UserInfo | null>(null)
+const messageUnread = ref(0)
 
 export function useAuth() {
   const isLoggedIn = computed(() => user.value !== null)
@@ -13,12 +14,14 @@ export function useAuth() {
   function clearToken() {
     localStorage.removeItem('token')
     user.value = null
+    messageUnread.value = 0
   }
 
   async function login(username: string, password: string) {
     const res = await apiLogin({ username, password })
     setToken(res.token)
     user.value = res.user
+    await refreshUnread()
     return res.user
   }
 
@@ -37,10 +40,21 @@ export function useAuth() {
     }
     try {
       user.value = await getMe()
+      await refreshUnread()
     } catch {
       clearToken()
     }
   }
 
-  return { user, isLoggedIn, login, register, logout, restore }
+  async function refreshUnread() {
+    if (!localStorage.getItem('token')) return
+    try {
+      const res = await getMessages()
+      messageUnread.value = res.unread
+    } catch {
+      messageUnread.value = 0
+    }
+  }
+
+  return { user, isLoggedIn, messageUnread, login, register, logout, restore, refreshUnread }
 }

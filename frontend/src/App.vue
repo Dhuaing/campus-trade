@@ -6,7 +6,10 @@
         <nav class="nav">
           <router-link to="/">首页</router-link>
           <router-link to="/publish">发布</router-link>
-          <router-link to="/messages">消息</router-link>
+          <router-link to="/messages" class="msg-link">
+            消息
+            <span v-if="messageUnread > 0" class="badge">{{ messageUnread > 99 ? '99+' : messageUnread }}</span>
+          </router-link>
           <router-link to="/my">我的</router-link>
         </nav>
       </div>
@@ -21,7 +24,7 @@
 import { onMounted } from 'vue'
 import { useAuth } from '@/composables/useAuth'
 
-const { restore } = useAuth()
+const { restore, messageUnread } = useAuth()
 
 onMounted(() => {
   restore()
@@ -55,4 +58,21 @@ onMounted(() => {
   font-size: 15px;
 }
 .nav a.router-link-active { color: var(--color-primary); }
+.msg-link { position: relative; }
+.badge {
+  position: absolute;
+  top: -8px;
+  right: -14px;
+  background: var(--color-price);
+  color: #fff;
+  font-size: 11px;
+  min-width: 18px;
+  height: 18px;
+  border-radius: 9px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 5px;
+  line-height: 1;
+}
 </style>

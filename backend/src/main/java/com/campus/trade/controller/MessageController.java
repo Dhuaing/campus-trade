@@ -16,6 +16,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -88,6 +89,28 @@ public class MessageController {
         message.setContent(req.content());
         Message saved = messageRepository.save(message);
         return ResponseEntity.status(HttpStatus.CREATED).body(Map.of("id", saved.getId()));
+    }
+
+    /** 标记单条消息为已读（仅接收者本人可操作） */
+    @PostMapping("/{id}/read")
+    public ResponseEntity<?> markAsRead(@PathVariable Long id, Authentication authentication) {
+        if (authentication == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+        Long userId = (Long) authentication.getPrincipal();
+        Message message = messageRepository.findById(id).orElse(null);
+        if (message == null) {
+            return ResponseEntity.notFound().build();
+        }
+        if (!message.getToUser().getId().equals(userId)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(Map.of("message", "无权操作"));
+        }
+        if (Boolean.FALSE.equals(message.getIsRead())) {
+            message.setIsRead(true);
+            messageRepository.save(message);
+        }
+        return ResponseEntity.ok(Map.of("id", message.getId(), "isRead", true));
     }
 
     public record SendMessageRequest(

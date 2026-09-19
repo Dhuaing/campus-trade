@@ -12,7 +12,7 @@
       <div v-else-if="list.length === 0" class="tip">暂无消息</div>
 
       <div v-else class="list">
-        <div v-for="m in list" :key="m.id" class="msg-item">
+        <div v-for="m in list" :key="m.id" class="msg-item" @click="onRead(m)">
           <div class="avatar">👤</div>
           <div class="body">
             <div class="head">
@@ -30,10 +30,10 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import { getMessages, type Message } from '@/api/request'
+import { getMessages, markMessageRead, type Message } from '@/api/request'
 import { useAuth } from '@/composables/useAuth'
 
-const { isLoggedIn } = useAuth()
+const { isLoggedIn, refreshUnread } = useAuth()
 const list = ref<Message[]>([])
 const loading = ref(true)
 const error = ref('')
@@ -49,6 +49,17 @@ onMounted(async () => {
     loading.value = false
   }
 })
+
+async function onRead(m: Message) {
+  if (m.isRead) return
+  try {
+    await markMessageRead(m.id)
+    m.isRead = true
+    await refreshUnread()
+  } catch {
+    // 忽略已读失败，不影响展示
+  }
+}
 </script>
 
 <style scoped>
@@ -59,7 +70,10 @@ onMounted(async () => {
   background: var(--color-card);
   border-radius: var(--radius);
   padding: 14px;
+  cursor: pointer;
+  transition: background 0.15s;
 }
+.msg-item:hover { background: #f7f8f9; }
 .avatar {
   width: 40px; height: 40px; border-radius: 50%;
   background: #e8f5e9; display: flex; align-items: center; justify-content: center;

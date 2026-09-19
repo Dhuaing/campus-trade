@@ -114,6 +114,16 @@ export async function getMessages(): Promise<{ messages: Message[]; unread: numb
   return res.json()
 }
 
+/** 标记消息已读 */
+export async function markMessageRead(id: number): Promise<{ id: number; isRead: boolean }> {
+  const res = await fetch(`${baseURL}/api/messages/${id}/read`, {
+    method: 'POST',
+    headers: authHeaders()
+  })
+  if (!res.ok) throw new Error(`操作失败: ${res.status}`)
+  return res.json()
+}
+
 /** 发送消息 */
 export async function sendMessage(input: {
   toUserId: number

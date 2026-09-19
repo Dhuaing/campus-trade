@@ -15,6 +15,17 @@
       >{{ c }}</span>
     </div>
 
+    <div class="search-bar">
+      <input
+        v-model="keyword"
+        class="search-input"
+        type="search"
+        placeholder="搜索商品名称或描述"
+        @keyup.enter="search"
+      />
+      <button class="search-btn" @click="search">搜索</button>
+    </div>
+
     <div v-if="loading" class="tip">加载中...</div>
     <div v-else-if="error" class="tip error">{{ error }}</div>
     <div v-else-if="filtered.length === 0" class="tip">暂无商品</div>
@@ -52,6 +63,7 @@ const activeCategory = ref('全部')
 const products = ref<Product[]>([])
 const loading = ref(true)
 const error = ref('')
+const keyword = ref('')
 
 const filtered = computed(() =>
   activeCategory.value === '全部'
@@ -59,15 +71,21 @@ const filtered = computed(() =>
     : products.value.filter(p => p.category === activeCategory.value)
 )
 
-onMounted(async () => {
+const load = async (q?: string) => {
+  loading.value = true
+  error.value = ''
   try {
-    products.value = await getProducts()
+    products.value = await getProducts(q)
   } catch (e) {
     error.value = e instanceof Error ? e.message : '加载失败'
   } finally {
     loading.value = false
   }
-})
+}
+
+const search = () => load(keyword.value.trim() || undefined)
+
+onMounted(() => load())
 </script>
 
 <style scoped>
@@ -82,6 +100,24 @@ onMounted(async () => {
 .banner p { opacity: 0.9; }
 
 .filters { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
+.search-bar { display: flex; gap: 8px; margin-bottom: 16px; }
+.search-input {
+  flex: 1;
+  padding: 10px 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  font-size: 14px;
+}
+.search-btn {
+  padding: 10px 20px;
+  background: var(--primary);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius);
+  cursor: pointer;
+  font-size: 14px;
+}
+.search-btn:hover { opacity: 0.9; }
 .chip {
   padding: 6px 14px;
   background: var(--color-card);

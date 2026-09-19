@@ -17,6 +17,13 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
     List<Product> findByStatusOrderByCreatedAtDesc(String status);
 
     @EntityGraph(attributePaths = "creator")
+    @Query("SELECT p FROM Product p WHERE p.status = :status " +
+           "AND (LOWER(p.title) LIKE LOWER(CONCAT('%', :q, '%')) " +
+           "OR LOWER(p.description) LIKE LOWER(CONCAT('%', :q, '%'))) " +
+           "ORDER BY p.createdAt DESC")
+    List<Product> search(@Param("status") String status, @Param("q") String q);
+
+    @EntityGraph(attributePaths = "creator")
     @Query("SELECT p FROM Product p WHERE p.id = :id")
     Optional<Product> findWithCreatorById(@Param("id") Long id);
 }

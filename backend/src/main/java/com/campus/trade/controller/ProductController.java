@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
@@ -37,9 +38,12 @@ public class ProductController {
         this.userRepository = userRepository;
     }
 
-    /** 在售商品列表（按发布时间倒序） */
+    /** 在售商品列表（按发布时间倒序），q 非空时按标题/描述模糊搜索 */
     @GetMapping
-    public List<Product> list() {
+    public List<Product> list(@RequestParam(required = false) String q) {
+        if (q != null && !q.isBlank()) {
+            return productRepository.search("ON_SALE", q.trim());
+        }
         return productRepository.findByStatusOrderByCreatedAtDesc("ON_SALE");
     }
 

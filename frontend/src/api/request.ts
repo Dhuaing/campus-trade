@@ -45,8 +45,9 @@ function authHeaders(): Record<string, string> {
   return token ? { Authorization: `Bearer ${token}` } : {}
 }
 
-export async function getProducts(): Promise<Product[]> {
-  const res = await fetch(`${baseURL}/api/products`)
+export async function getProducts(q?: string): Promise<Product[]> {
+  const url = q ? `${baseURL}/api/products?q=${encodeURIComponent(q)}` : `${baseURL}/api/products`
+  const res = await fetch(url)
   if (!res.ok) throw new Error(`请求失败: ${res.status}`)
   return res.json()
 }

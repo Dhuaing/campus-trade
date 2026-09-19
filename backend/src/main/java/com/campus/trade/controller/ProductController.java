@@ -10,6 +10,7 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.Size;
 import java.math.BigDecimal;
+import java.util.Arrays;
 import java.util.List;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -38,11 +39,17 @@ public class ProductController {
         this.userRepository = userRepository;
     }
 
-    /** 在售商品列表（按发布时间倒序），q 非空时按标题/描述模糊搜索 */
+    /** 在售商品列表，q 非空时按空格拆为多关键词，标题/描述命中任一即返回，标题命中优先排序 */
     @GetMapping
     public List<Product> list(@RequestParam(required = false) String q) {
         if (q != null && !q.isBlank()) {
-            return productRepository.search("ON_SALE", q.trim());
+            List<String> keywords = Arrays.stream(q.split("\\s+"))
+                    .filter(s -> !s.isBlank())
+                    .map(s -> "%" + s + "%")
+                    .toList();
+            if (!keywords.isEmpty()) {
+                return productRepository.searchMulti("ON_SALE", keywords);
+            }
         }
         return productRepository.findByStatusOrderByCreatedAtDesc("ON_SALE");
     }

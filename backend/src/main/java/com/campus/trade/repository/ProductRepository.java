@@ -16,12 +16,18 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
     @EntityGraph(attributePaths = "creator")
     List<Product> findByStatusOrderByCreatedAtDesc(String status);
 
-    @EntityGraph(attributePaths = "creator")
-    @Query("SELECT p FROM Product p WHERE p.status = :status " +
-           "AND (LOWER(p.title) LIKE LOWER(CONCAT('%', :q, '%')) " +
-           "OR LOWER(p.description) LIKE LOWER(CONCAT('%', :q, '%'))) " +
-           "ORDER BY p.createdAt DESC")
-    List<Product> search(@Param("status") String status, @Param("q") String q);
+    /**
+     * 多关键词搜索：关键词按空格拆分，标题或描述命中任一关键词即返回；
+     * 标题命中权重高于仅描述命中，同权重按发布时间倒序。
+     * keywords 每个元素需自带 LIKE 通配符（如 %iPad%）。
+     */
+    @Query(value = "SELECT p.* FROM products p WHERE p.status = :status AND (" +
+            "p.title ILIKE ANY (:keywords) OR p.description ILIKE ANY (:keywords)" +
+            ") ORDER BY CASE WHEN p.title ILIKE ANY (:keywords) THEN 2 ELSE 1 END DESC, " +
+            "p.created_at DESC",
+            nativeQuery = true)
+    List<Product> searchMulti(@Param("status") String status,
+                              @Param("keywords") List<String> keywords);
 
     @EntityGraph(attributePaths = "creator")
     @Query("SELECT p FROM Product p WHERE p.id = :id")

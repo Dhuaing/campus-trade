@@ -1,4 +1,4 @@
-﻿// API 请求封装
+// API 请求封装
 // 开发环境 baseURL 为空，走 Vite 代理；生产环境读环境变量
 const baseURL = import.meta.env.VITE_API_BASE_URL ?? ''
 

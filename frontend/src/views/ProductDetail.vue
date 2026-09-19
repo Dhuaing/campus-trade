@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <div class="detail">
     <router-link to="/" class="back">← 返回列表</router-link>
 

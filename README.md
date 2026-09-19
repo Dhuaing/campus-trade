@@ -1,4 +1,4 @@
-﻿# 校园二手交易平台（Campus Trade）
+# 校园二手交易平台（Campus Trade）
 
 > 面向高校学生的二手物品交易平台 · 作品集项目
 > 技术栈：Vue3 + TypeScript + Vite ｜ Spring Boot + PostgreSQL

@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <div class="app">
     <header class="topbar">
       <div class="container topbar-inner">

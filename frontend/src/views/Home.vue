@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <div class="home">
     <section class="banner">
       <h1>校园闲置，轻松流转</h1>

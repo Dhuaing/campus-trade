@@ -95,6 +95,7 @@ public class ProductController {
         product.setPrice(req.price());
         product.setOriginalPrice(req.originalPrice());
         product.setCategory(req.category());
+        product.setCoverImage(req.coverImage());
         product.setCreator(creator);
         Product saved = productRepository.save(product);
         return ResponseEntity.status(HttpStatus.CREATED).body(saved);
@@ -163,7 +164,10 @@ public class ProductController {
             BigDecimal originalPrice,
 
             @Size(max = 50, message = "分类最长 50 字")
-            String category
+            String category,
+
+            @Size(max = 2000000, message = "图片过大")
+            String coverImage
     ) {
     }
 }

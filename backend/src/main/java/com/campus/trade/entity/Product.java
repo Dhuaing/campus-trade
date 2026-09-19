@@ -36,7 +36,7 @@ public class Product {
     @Column(name = "original_price", precision = 10, scale = 2)
     private BigDecimal originalPrice;
 
-    @Column(name = "cover_image", length = 500)
+    @Column(name = "cover_image", columnDefinition = "TEXT")
     private String coverImage;
 
     @Column(length = 50)

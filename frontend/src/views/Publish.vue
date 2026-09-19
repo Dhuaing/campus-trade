@@ -32,6 +32,20 @@
         <textarea v-model.trim="form.description" rows="5" maxlength="2000" placeholder="成色、购买渠道、转让原因等"></textarea>
       </div>
 
+      <div class="field">
+        <label>封面图（选填，≤500KB）</label>
+        <div class="upload-area">
+          <div v-if="form.coverImage" class="preview">
+            <img :src="form.coverImage" alt="预览" />
+            <button type="button" class="remove-btn" @click="removeImage">×</button>
+          </div>
+          <label v-else class="upload-btn">
+            <input type="file" accept="image/*" @change="onImageChange" hidden />
+            <span>📷 点击选择图片</span>
+          </label>
+        </div>
+      </div>
+
       <div v-if="error" class="error-tip">{{ error }}</div>
 
       <button class="btn primary" type="submit" :disabled="submitting">
@@ -54,10 +68,36 @@ const form = reactive({
   category: '',
   price: '',
   originalPrice: '',
-  description: ''
+  description: '',
+  coverImage: ''
 })
 const submitting = ref(false)
 const error = ref('')
+
+const MAX_IMAGE_SIZE = 500 * 1024 // 500KB
+
+function onImageChange(e: Event) {
+  const file = (e.target as HTMLInputElement).files?.[0]
+  if (!file) return
+  if (!file.type.startsWith('image/')) {
+    error.value = '请选择图片文件'
+    return
+  }
+  if (file.size > MAX_IMAGE_SIZE) {
+    error.value = `图片不能超过 ${MAX_IMAGE_SIZE / 1024}KB`
+    return
+  }
+  error.value = ''
+  const reader = new FileReader()
+  reader.onload = () => {
+    form.coverImage = reader.result as string
+  }
+  reader.readAsDataURL(file)
+}
+
+function removeImage() {
+  form.coverImage = ''
+}
 
 async function submit() {
   error.value = ''
@@ -86,7 +126,8 @@ async function submit() {
       price,
       originalPrice,
       category: form.category || undefined,
-      description: form.description || undefined
+      description: form.description || undefined,
+      coverImage: form.coverImage || undefined
     })
     router.push(`/product/${created.id}`)
   } catch (e) {
@@ -138,4 +179,21 @@ async function submit() {
   cursor: pointer;
 }
 .btn.primary:disabled { opacity: 0.6; }
+
+.upload-area { margin-top: 6px; }
+.upload-btn {
+  display: flex; align-items: center; justify-content: center;
+  width: 120px; height: 120px;
+  border: 2px dashed #e3e5e8; border-radius: 8px;
+  color: var(--color-text-sub); font-size: 13px; cursor: pointer;
+}
+.upload-btn:hover { border-color: var(--color-primary); color: var(--color-primary); }
+.preview { position: relative; width: 120px; height: 120px; }
+.preview img { width: 100%; height: 100%; object-fit: cover; border-radius: 8px; }
+.remove-btn {
+  position: absolute; top: -8px; right: -8px;
+  width: 24px; height: 24px; border-radius: 50%;
+  background: #ff5252; color: #fff; border: none;
+  font-size: 16px; line-height: 1; cursor: pointer;
+}
 </style>

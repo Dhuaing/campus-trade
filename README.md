@@ -67,6 +67,7 @@ flowchart LR
 | POST | `/api/products` | 需登录 | 发布商品（Bean Validation 校验，关联发布者） |
 | GET | `/api/messages` | 需登录 | 收件箱（按时间倒序，含未读数） |
 | POST | `/api/messages` | 需登录 | 发送站内消息 |
+| POST | `/api/messages/{id}/read` | 需登录 | 标记单条消息已读（仅接收者） |
 | GET | `/actuator/health` | 公开 | 健康检查（Railway 部署探针） |
 
 ## 本地运行

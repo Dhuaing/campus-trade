@@ -41,7 +41,7 @@
         <div v-if="contactSuccess" class="success-tip">消息已发送！</div>
         <div class="modal-actions">
           <button class="btn ghost" @click="contactOpen = false">取消</button>
-          <button class="btn primary" @click="sendMessage" :disabled="sending">
+          <button class="btn primary" @click="handleSend" :disabled="sending">
             {{ sending ? '发送中...' : '发送' }}
           </button>
         </div>
@@ -53,7 +53,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { getProduct, sendMessage, type Product } from '@/api/request'
+import { getProduct, sendMessage as sendMessageApi, type Product } from '@/api/request'
 import { useAuth } from '@/composables/useAuth'
 
 const route = useRoute()
@@ -94,7 +94,7 @@ function openContact() {
   contactOpen.value = true
 }
 
-async function sendMessage() {
+async function handleSend() {
   contactError.value = ''
   if (!contactMsg.value.trim()) {
     contactError.value = '请输入消息内容'
@@ -106,7 +106,7 @@ async function sendMessage() {
   }
   sending.value = true
   try {
-    await sendMessage({
+    await sendMessageApi({
       toUserId: sellerId.value,
       productId: product.value!.id,
       content: contactMsg.value.trim()

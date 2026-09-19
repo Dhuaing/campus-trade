@@ -6,6 +6,7 @@ import jakarta.persistence.PersistenceContext;
 import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.CriteriaQuery;
 import jakarta.persistence.criteria.Expression;
+import jakarta.persistence.criteria.JoinType;
 import jakarta.persistence.criteria.Predicate;
 import jakarta.persistence.criteria.Root;
 import java.util.ArrayList;
@@ -24,6 +25,8 @@ public class ProductRepositoryImpl implements ProductRepositoryCustom {
         CriteriaBuilder cb = em.getCriteriaBuilder();
         CriteriaQuery<Product> cq = cb.createQuery(Product.class);
         Root<Product> root = cq.from(Product.class);
+        // eagerly fetch creator to avoid LazyInitializationException on JSON serialization
+        root.fetch("creator", JoinType.LEFT);
 
         // each keyword matches title OR description (case-insensitive)
         List<Predicate> keywordOr = new ArrayList<>();

@@ -15,6 +15,7 @@ import java.util.List;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -54,6 +55,17 @@ public class ProductController {
         return productRepository.findByStatusOrderByCreatedAtDesc("ON_SALE");
     }
 
+    /** 我发布的商品（需登录） */
+    @GetMapping("/mine")
+    public ResponseEntity<?> mine(Authentication authentication) {
+        if (authentication == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(java.util.Map.of("message", "请先登录"));
+        }
+        Long userId = (Long) authentication.getPrincipal();
+        return ResponseEntity.ok(productRepository.findByCreator_IdOrderByCreatedAtDesc(userId));
+    }
+
     /** 商品详情 */
     @GetMapping("/{id}")
     public ResponseEntity<Product> detail(@PathVariable Long id) {
@@ -85,6 +97,28 @@ public class ProductController {
         product.setCreator(creator);
         Product saved = productRepository.save(product);
         return ResponseEntity.status(HttpStatus.CREATED).body(saved);
+    }
+
+    /** 下架自己的商品（软删除，status 设为 REMOVED，仅本人可操作） */
+    @DeleteMapping("/{id}")
+    public ResponseEntity<?> delete(@PathVariable Long id, Authentication authentication) {
+        if (authentication == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(java.util.Map.of("message", "请先登录"));
+        }
+        Long userId = (Long) authentication.getPrincipal();
+        Product product = productRepository.findWithCreatorById(id).orElse(null);
+        if (product == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(java.util.Map.of("message", "商品不存在"));
+        }
+        if (product.getCreator() == null || !userId.equals(product.getCreator().getId())) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(java.util.Map.of("message", "无权操作他人商品"));
+        }
+        product.setStatus("REMOVED");
+        productRepository.save(product);
+        return ResponseEntity.noContent().build();
     }
 
     /**

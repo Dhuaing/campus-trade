@@ -17,6 +17,9 @@ public interface ProductRepository extends JpaRepository<Product, Long>, Product
     List<Product> findByStatusOrderByCreatedAtDesc(String status);
 
     @EntityGraph(attributePaths = "creator")
+    List<Product> findByCreator_IdOrderByCreatedAtDesc(Long creatorId);
+
+    @EntityGraph(attributePaths = "creator")
     @Query("SELECT p FROM Product p WHERE p.id = :id")
     Optional<Product> findWithCreatorById(@Param("id") Long id);
 }

@@ -70,6 +70,25 @@ export async function createProduct(input: ProductInput): Promise<Product> {
   return res.json()
 }
 
+/** 我发布的商品 */
+export async function getMyProducts(): Promise<Product[]> {
+  const res = await fetch(`${baseURL}/api/products/mine`, { headers: authHeaders() })
+  if (res.status === 401) throw new Error('请先登录')
+  if (!res.ok) throw new Error(`获取失败: ${res.status}`)
+  return res.json()
+}
+
+/** 下架（删除）自己的商品 */
+export async function deleteProduct(id: number): Promise<void> {
+  const res = await fetch(`${baseURL}/api/products/${id}`, {
+    method: 'DELETE',
+    headers: authHeaders()
+  })
+  if (res.status === 401) throw new Error('请先登录')
+  if (res.status === 403) throw new Error('无权操作他人商品')
+  if (!res.ok) throw new Error(`删除失败: ${res.status}`)
+}
+
 /** 注册 */
 export async function register(input: {
   username: string

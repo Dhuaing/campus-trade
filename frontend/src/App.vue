@@ -5,7 +5,7 @@
         <router-link to="/" class="logo">校园二手</router-link>
         <nav class="nav">
           <router-link to="/">首页</router-link>
-          <a href="javascript:;">发布</a>
+          <router-link to="/publish">发布</router-link>
           <a href="javascript:;">消息</a>
           <a href="javascript:;">我的</a>
         </nav>

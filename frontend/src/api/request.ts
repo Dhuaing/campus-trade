@@ -14,6 +14,14 @@ export interface Product {
   createdAt: string
 }
 
+export interface ProductInput {
+  title: string
+  description?: string
+  price: number
+  originalPrice?: number
+  category?: string
+}
+
 export async function getProducts(): Promise<Product[]> {
   const res = await fetch(`${baseURL}/api/products`)
   if (!res.ok) {
@@ -26,6 +34,19 @@ export async function getProduct(id: number): Promise<Product> {
   const res = await fetch(`${baseURL}/api/products/${id}`)
   if (!res.ok) {
     throw new Error(`请求失败: ${res.status}`)
+  }
+  return res.json()
+}
+
+/** 发布商品 */
+export async function createProduct(input: ProductInput): Promise<Product> {
+  const res = await fetch(`${baseURL}/api/products`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(input)
+  })
+  if (!res.ok) {
+    throw new Error(`发布失败: ${res.status}`)
   }
   return res.json()
 }

@@ -6,20 +6,22 @@
     </section>
 
     <div class="filters">
-      <span class="chip active">全部</span>
-      <span class="chip">教材书籍</span>
-      <span class="chip">数码电子</span>
-      <span class="chip">生活用品</span>
-      <span class="chip">运动户外</span>
+      <span
+        v-for="c in categories"
+        :key="c"
+        class="chip"
+        :class="{ active: activeCategory === c }"
+        @click="activeCategory = c"
+      >{{ c }}</span>
     </div>
 
     <div v-if="loading" class="tip">加载中...</div>
     <div v-else-if="error" class="tip error">{{ error }}</div>
-    <div v-else-if="products.length === 0" class="tip">暂无商品</div>
+    <div v-else-if="filtered.length === 0" class="tip">暂无商品</div>
 
     <div v-else class="grid">
       <router-link
-        v-for="item in products"
+        v-for="item in filtered"
         :key="item.id"
         :to="`/product/${item.id}`"
         class="card"
@@ -41,12 +43,21 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { getProducts, type Product } from '@/api/request'
+
+const categories = ['全部', '教材书籍', '数码电子', '生活用品', '运动户外']
+const activeCategory = ref('全部')
 
 const products = ref<Product[]>([])
 const loading = ref(true)
 const error = ref('')
+
+const filtered = computed(() =>
+  activeCategory.value === '全部'
+    ? products.value
+    : products.value.filter(p => p.category === activeCategory.value)
+)
 
 onMounted(async () => {
   try {
@@ -77,6 +88,7 @@ onMounted(async () => {
   border-radius: 999px;
   font-size: 13px;
   color: var(--color-text-sub);
+  cursor: pointer;
 }
 .chip.active { background: var(--color-primary); color: #fff; }
 

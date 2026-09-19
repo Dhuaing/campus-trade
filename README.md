@@ -12,7 +12,8 @@
 
 ## 功能特性
 
-- 商品列表：按分类浏览（教材书籍 / 数码电子 / 生活用品 / 运动户外）
+- 商品列表：按分类浏览（教材书籍 / 数码电子 / 生活用品 / 运动户外），分类筛选即点即切
+- 发布商品：表单校验（必填/数值/长度）→ `POST /api/products` → 创建成功跳转详情页
 - 商品详情：现价、原价对比、卖家认证信息
 - 种子数据：数据库表为空时自动写入 6 条示例商品（`DataInitializer`）
 
@@ -57,6 +58,7 @@ flowchart LR
 |---|---|---|
 | GET | `/api/products` | 商品列表 |
 | GET | `/api/products/{id}` | 商品详情 |
+| POST | `/api/products` | 发布商品（Bean Validation 校验请求体） |
 | GET | `/actuator/health` | 健康检查（Railway 部署探针） |
 
 ## 本地运行

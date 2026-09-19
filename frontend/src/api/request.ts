@@ -38,6 +38,7 @@ export interface ProductInput {
   price: number
   originalPrice?: number
   category?: string
+  coverImage?: string
 }
 
 function authHeaders(): Record<string, string> {

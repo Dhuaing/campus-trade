@@ -1,8 +1,10 @@
 import { ref, computed } from 'vue'
 import { getMe, getMessages, login as apiLogin, register as apiRegister, type UserInfo } from '@/api/request'
+import { useWs } from '@/composables/useWs'
 
 const user = ref<UserInfo | null>(null)
 const messageUnread = ref(0)
+const { disconnect } = useWs()
 
 export function useAuth() {
   const isLoggedIn = computed(() => user.value !== null)
@@ -15,6 +17,7 @@ export function useAuth() {
     localStorage.removeItem('token')
     user.value = null
     messageUnread.value = 0
+    disconnect()
   }
 
   async function login(username: string, password: string) {

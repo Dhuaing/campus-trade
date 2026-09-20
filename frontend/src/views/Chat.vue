@@ -36,10 +36,11 @@
 </template>
 
 <script setup lang="ts">
-import { ref, nextTick, onMounted } from 'vue'
+import { ref, nextTick, onMounted, onUnmounted } from 'vue'
 import { useRoute } from 'vue-router'
-import { getConversation, sendMessage, type ConversationMessage } from '@/api/request'
+import { getConversation, sendMessage, markMessageRead, type ConversationMessage } from '@/api/request'
 import { useAuth } from '@/composables/useAuth'
+import { useWs } from '@/composables/useWs'
 
 const route = useRoute()
 const { user, refreshUnread } = useAuth()
@@ -57,6 +58,29 @@ onMounted(async () => {
   myId.value = user.value?.id ?? 0
   await load()
 })
+
+// 实时接收对方消息：追加气泡、滚动到底、标记已读
+const offWs = onMessage(async data => {
+  if (data.type !== 'message' || !data.message) return
+  const m = data.message
+  if (m.fromUserId !== otherId) return
+  list.value.push({
+    id: m.id,
+    fromUserId: m.fromUserId,
+    fromUserNickname: m.fromUserNickname,
+    toUserId: m.toUserId,
+    content: m.content,
+    isRead: true,
+    createdAt: m.createdAt
+  })
+  await scrollBottom()
+  try {
+    await markMessageRead(m.id)
+  } catch { /* 已读失败不阻塞 */ }
+  refreshUnread()
+})
+
+onUnmounted(() => offWs())
 
 async function load() {
   loading.value = true

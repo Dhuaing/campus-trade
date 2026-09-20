@@ -19,6 +19,10 @@
         <div class="icon">💬</div>
         <div class="label">我的消息</div>
       </router-link>
+      <router-link to="/orders" class="action-card">
+        <div class="icon">🧾</div>
+        <div class="label">我的订单</div>
+      </router-link>
       <router-link to="/" class="action-card">
         <div class="icon">📦</div>
         <div class="label">浏览商品</div>

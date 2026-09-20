@@ -27,9 +27,19 @@
           </div>
         </div>
         <div class="actions">
-          <button class="btn ghost" @click="openContact">联系卖家</button>
-          <button class="btn primary" @click="openContact">立即下单</button>
+          <div v-if="isMine" class="own-tip">这是你发布的商品</div>
+          <template v-else>
+            <button class="btn ghost" @click="openContact">联系卖家</button>
+            <button
+              class="btn primary"
+              :disabled="product.status !== 'ON_SALE' || ordering"
+              @click="handleOrder"
+            >
+              {{ product.status === 'SOLD' ? '已售出' : ordering ? '下单中...' : '我想要' }}
+            </button>
+          </template>
         </div>
+        <div v-if="orderError" class="error-tip">{{ orderError }}</div>
       </div>
     </div>
 
@@ -53,18 +63,24 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { getProduct, sendMessage as sendMessageApi, type Product } from '@/api/request'
+import { getProduct, sendMessage as sendMessageApi, createOrder, type Product } from '@/api/request'
 import { useAuth } from '@/composables/useAuth'
 
 const route = useRoute()
 const router = useRouter()
-const { isLoggedIn } = useAuth()
+const { user, isLoggedIn } = useAuth()
 const product = ref<Product | null>(null)
 const loading = ref(true)
 const error = ref('')
 
 const sellerName = computed(() => product.value?.creator?.nickname || '校园卖家')
 const sellerId = computed(() => product.value?.creator?.id)
+const isMine = computed(() =>
+  !!user.value && !!product.value?.creator && user.value.id === product.value.creator.id
+)
+
+const ordering = ref(false)
+const orderError = ref('')
 
 const contactOpen = ref(false)
 const contactMsg = ref('')
@@ -119,6 +135,25 @@ async function handleSend() {
     sending.value = false
   }
 }
+
+async function handleOrder() {
+  if (!isLoggedIn.value) {
+    router.push({ name: 'login', query: { redirect: route.fullPath } })
+    return
+  }
+  orderError.value = ''
+  if (!confirm(`确认以 ¥${product.value!.price} 购买「${product.value!.title}」？`)) return
+  ordering.value = true
+  try {
+    await createOrder(product.value!.id)
+    alert('下单成功！请到「我的订单」跟踪交易')
+    router.push('/orders')
+  } catch (e) {
+    orderError.value = e instanceof Error ? e.message : '下单失败'
+  } finally {
+    ordering.value = false
+  }
+}
 </script>
 
 <style scoped>
@@ -150,6 +185,11 @@ async function handleSend() {
 .seller-name { font-weight: 500; }
 .seller-sub { font-size: 12px; color: var(--color-text-sub); }
 .actions { display: flex; gap: 12px; margin-top: 20px; }
+.own-tip {
+  flex: 1; text-align: center; padding: 12px;
+  background: #f0f1f3; border-radius: 999px;
+  color: var(--color-text-sub); font-size: 14px;
+}
 .btn { flex: 1; padding: 12px; border-radius: 999px; font-size: 15px; border: none; cursor: pointer; }
 .btn.primary { background: var(--color-primary); color: #fff; }
 .btn.ghost { background: #f0f1f3; color: var(--color-text); }

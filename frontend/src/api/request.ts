@@ -42,6 +42,15 @@ export interface ConversationMessage {
   createdAt: string
 }
 
+export interface OrderItem {
+  id: number
+  product: { id: number; title: string; price: number; coverImage?: string } | null
+  buyer: { id: number; nickname: string }
+  seller: { id: number; nickname: string }
+  status: string
+  createdAt: string
+}
+
 export interface ProductInput {
   title: string
   description?: string
@@ -180,6 +189,54 @@ export async function sendMessage(input: {
   })
   if (res.status === 401) throw new Error('请先登录')
   if (!res.ok) throw new Error(`发送失败: ${res.status}`)
+  return res.json()
+}
+
+/** 买家下单 */
+export async function createOrder(productId: number): Promise<OrderItem> {
+  const res = await fetch(`${baseURL}/api/orders`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...authHeaders() },
+    body: JSON.stringify({ productId })
+  })
+  if (res.status === 401) throw new Error('请先登录')
+  if (res.status === 403) throw new Error('不能购买自己发布的商品')
+  if (res.status === 409) throw new Error('商品当前不可购买')
+  if (!res.ok) throw new Error(`下单失败: ${res.status}`)
+  return res.json()
+}
+
+/** 我的订单：bought 我买到的 / sold 我卖出的 */
+export async function getMyOrders(): Promise<{ bought: OrderItem[]; sold: OrderItem[] }> {
+  const res = await fetch(`${baseURL}/api/orders/mine`, { headers: authHeaders() })
+  if (res.status === 401) throw new Error('请先登录')
+  if (!res.ok) throw new Error(`获取订单失败: ${res.status}`)
+  return res.json()
+}
+
+/** 卖家确认完成订单 */
+export async function completeOrder(id: number): Promise<OrderItem> {
+  const res = await fetch(`${baseURL}/api/orders/${id}/complete`, {
+    method: 'PUT',
+    headers: authHeaders()
+  })
+  if (res.status === 401) throw new Error('请先登录')
+  if (res.status === 403) throw new Error('仅卖家可确认完成')
+  if (res.status === 409) throw new Error('订单已处理，无法重复操作')
+  if (!res.ok) throw new Error(`操作失败: ${res.status}`)
+  return res.json()
+}
+
+/** 取消订单（买家或卖家），商品恢复在售 */
+export async function cancelOrder(id: number): Promise<OrderItem> {
+  const res = await fetch(`${baseURL}/api/orders/${id}/cancel`, {
+    method: 'PUT',
+    headers: authHeaders()
+  })
+  if (res.status === 401) throw new Error('请先登录')
+  if (res.status === 403) throw new Error('无权操作该订单')
+  if (res.status === 409) throw new Error('订单已处理，无法重复操作')
+  if (!res.ok) throw new Error(`操作失败: ${res.status}`)
   return res.json()
 }
 

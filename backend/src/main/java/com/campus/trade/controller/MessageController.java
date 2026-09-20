@@ -6,6 +6,8 @@ import com.campus.trade.entity.User;
 import com.campus.trade.repository.MessageRepository;
 import com.campus.trade.repository.ProductRepository;
 import com.campus.trade.repository.UserRepository;
+import com.campus.trade.ws.ChatWebSocketHandler;
+import com.campus.trade.ws.WsSessionRegistry;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -33,13 +35,16 @@ public class MessageController {
     private final MessageRepository messageRepository;
     private final UserRepository userRepository;
     private final ProductRepository productRepository;
+    private final WsSessionRegistry wsSessionRegistry;
 
     public MessageController(MessageRepository messageRepository,
                              UserRepository userRepository,
-                             ProductRepository productRepository) {
+                             ProductRepository productRepository,
+                             WsSessionRegistry wsSessionRegistry) {
         this.messageRepository = messageRepository;
         this.userRepository = userRepository;
         this.productRepository = productRepository;
+        this.wsSessionRegistry = wsSessionRegistry;
     }
 
     /** 当前用户的收件箱（按时间倒序） */
@@ -91,6 +96,8 @@ public class MessageController {
         message.setProduct(product);
         message.setContent(req.content());
         Message saved = messageRepository.save(message);
+        // 实时推送给接收者的所有在线 WebSocket 会话
+        wsSessionRegistry.push(toUser.getId(), ChatWebSocketHandler.messagePayload(saved, fromUser, toUser.getId()));
         return ResponseEntity.status(HttpStatus.CREATED).body(Map.of("id", saved.getId()));
     }
 

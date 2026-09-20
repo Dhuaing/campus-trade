@@ -1,17 +1,12 @@
 package com.campus.trade.ws;
 
 import com.campus.trade.entity.Message;
-import com.campus.trade.entity.User;
 import com.campus.trade.repository.MessageRepository;
 import com.campus.trade.repository.ProductRepository;
 import com.campus.trade.repository.UserRepository;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.CloseStatus;
 import org.springframework.web.socket.TextMessage;
@@ -27,20 +22,22 @@ import org.springframework.web.socket.handler.TextWebSocketHandler;
 @Component
 public class ChatWebSocketHandler extends TextWebSocketHandler {
 
-    private final Map<Long, Set<WebSocketSession>> online = new ConcurrentHashMap<>();
     private final MessageRepository messageRepository;
     private final UserRepository userRepository;
     private final ProductRepository productRepository;
     private final ObjectMapper objectMapper;
+    private final WsSessionRegistry registry;
 
     public ChatWebSocketHandler(MessageRepository messageRepository,
                                 UserRepository userRepository,
                                 ProductRepository productRepository,
-                                ObjectMapper objectMapper) {
+                                ObjectMapper objectMapper,
+                                WsSessionRegistry registry) {
         this.messageRepository = messageRepository;
         this.userRepository = userRepository;
         this.productRepository = productRepository;
         this.objectMapper = objectMapper;
+        this.registry = registry;
     }
 
     @Override
@@ -50,7 +47,7 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
             closeQuietly(session);
             return;
         }
-        online.computeIfAbsent(userId, k -> ConcurrentHashMap.newKeySet()).add(session);
+        registry.register(userId, session);
     }
 
     @Override
@@ -59,13 +56,7 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
         if (userId == null) {
             return;
         }
-        Set<WebSocketSession> set = online.get(userId);
-        if (set != null) {
-            set.remove(session);
-            if (set.isEmpty()) {
-                online.remove(userId, set);
-            }
-        }
+        registry.remove(userId, session);
     }
 
     @Override
@@ -101,8 +92,8 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
             sendError(session, "不能给自己发消息");
             return;
         }
-        User fromUser = userRepository.findById(fromUserId).orElse(null);
-        User toUser = userRepository.findById(toUserId).orElse(null);
+        var fromUser = userRepository.findById(fromUserId).orElse(null);
+        var toUser = userRepository.findById(toUserId).orElse(null);
         if (fromUser == null || toUser == null) {
             sendError(session, "用户不存在");
             return;
@@ -120,53 +111,23 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
             sendError(session, "消息发送失败");
             return;
         }
-        Map<String, Object> payload = Map.of(
+        registry.push(toUserId, messagePayload(saved, fromUser, toUserId));
+    }
+
+    /** 新消息推送 payload（与 REST 会话接口字段一致） */
+    public static Map<String, Object> messagePayload(Message saved, User fromUser, Long toUserId) {
+        return Map.of(
                 "type", "message",
                 "message", Map.of(
                         "id", saved.getId(),
                         "fromUserId", fromUser.getId(),
                         "fromUserNickname", fromUser.getNickname(),
-                        "toUserId", toUser.getId(),
+                        "toUserId", toUserId,
                         "content", saved.getContent(),
                         "isRead", false,
                         "createdAt", String.valueOf(saved.getCreatedAt())
                 )
         );
-        push(toUserId, payload);
-    }
-
-    private void push(Long userId, Map<String, Object> payload) {
-        Set<WebSocketSession> set = online.get(userId);
-        if (set == null || set.isEmpty()) {
-            return;
-        }
-        String json;
-        try {
-            json = objectMapper.writeValueAsString(payload);
-        } catch (Exception e) {
-            return;
-        }
-        TextMessage text = new TextMessage(json);
-        List<WebSocketSession> dead = new ArrayList<>();
-        for (WebSocketSession s : set) {
-            try {
-                if (s.isOpen()) {
-                    synchronized (s) {
-                        s.sendMessage(text);
-                    }
-                } else {
-                    dead.add(s);
-                }
-            } catch (Exception e) {
-                dead.add(s);
-            }
-        }
-        for (WebSocketSession s : dead) {
-            Set<WebSocketSession> owner = online.get(userId);
-            if (owner != null) {
-                owner.remove(s);
-            }
-        }
     }
 
     private void sendError(WebSocketSession session, String message) {

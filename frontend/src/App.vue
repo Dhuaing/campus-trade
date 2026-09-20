@@ -21,13 +21,30 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted } from 'vue'
+import { onMounted, watch } from 'vue'
+import { useRoute } from 'vue-router'
 import { useAuth } from '@/composables/useAuth'
+import { useWs } from '@/composables/useWs'
 
-const { restore, messageUnread } = useAuth()
+const { restore, messageUnread, isLoggedIn } = useAuth()
+const { ensureConnected, disconnect, onMessage } = useWs()
+const route = useRoute()
 
 onMounted(() => {
   restore()
+})
+
+watch(isLoggedIn, v => {
+  if (v) ensureConnected()
+  else disconnect()
+})
+
+onMessage(data => {
+  if (data.type !== 'message' || !data.message) return
+  const m = data.message
+  // 正在与对方聊天时由 Chat.vue 负责展示并标记已读，不计未读
+  if (route.name === 'chat' && Number(route.params.userId) === m.fromUserId) return
+  messageUnread.value++
 })
 </script>
 

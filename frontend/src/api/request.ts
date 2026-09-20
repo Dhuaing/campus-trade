@@ -60,14 +60,25 @@ export interface ProductInput {
   coverImage?: string
 }
 
+export interface ProductPage {
+  content: Product[]
+  totalElements: number
+  page: number
+  size: number
+  hasMore: boolean
+}
+
 function authHeaders(): Record<string, string> {
   const token = localStorage.getItem('token')
   return token ? { Authorization: `Bearer ${token}` } : {}
 }
 
-export async function getProducts(q?: string): Promise<Product[]> {
-  const url = q ? `${baseURL}/api/products?q=${encodeURIComponent(q)}` : `${baseURL}/api/products`
-  const res = await fetch(url)
+export async function getProducts(q?: string, page = 0, size = 20): Promise<ProductPage> {
+  const params = new URLSearchParams()
+  if (q) params.set('q', q)
+  params.set('page', String(page))
+  params.set('size', String(size))
+  const res = await fetch(`${baseURL}/api/products?${params.toString()}`)
   if (!res.ok) throw new Error(`请求失败: ${res.status}`)
   return res.json()
 }

@@ -50,20 +50,32 @@
         </div>
       </router-link>
     </div>
+
+    <div ref="sentinel" class="sentinel">
+      <span v-if="loadingMore">正在加载更多...</span>
+      <span v-else-if="!loading && filtered.length > 0 && !hasMore" class="end">— 没有更多了 —</span>
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { getProducts, type Product } from '@/api/request'
+
+const PAGE_SIZE = 20
 
 const categories = ['全部', '教材书籍', '数码电子', '生活用品', '运动户外']
 const activeCategory = ref('全部')
 
 const products = ref<Product[]>([])
 const loading = ref(true)
+const loadingMore = ref(false)
 const error = ref('')
 const keyword = ref('')
+const page = ref(0)
+const hasMore = ref(false)
+const sentinel = ref<HTMLElement | null>(null)
+let observer: IntersectionObserver | null = null
 
 const filtered = computed(() =>
   activeCategory.value === '全部'
@@ -71,21 +83,42 @@ const filtered = computed(() =>
     : products.value.filter(p => p.category === activeCategory.value)
 )
 
-const load = async (q?: string) => {
-  loading.value = true
+const load = async (reset: boolean) => {
+  if (reset) {
+    page.value = 0
+    loading.value = true
+  } else {
+    if (loadingMore.value || !hasMore.value) return
+    loadingMore.value = true
+  }
   error.value = ''
   try {
-    products.value = await getProducts(q)
+    const data = await getProducts(keyword.value.trim() || undefined, page.value, PAGE_SIZE)
+    products.value = reset ? data.content : [...products.value, ...data.content]
+    hasMore.value = data.hasMore
+    page.value += 1
   } catch (e) {
     error.value = e instanceof Error ? e.message : '加载失败'
   } finally {
     loading.value = false
+    loadingMore.value = false
   }
 }
 
-const search = () => load(keyword.value.trim() || undefined)
+const search = () => load(true)
 
-onMounted(() => load())
+onMounted(() => {
+  load(true)
+  observer = new IntersectionObserver(entries => {
+    if (entries.some(e => e.isIntersecting)) load(false)
+  }, { rootMargin: '400px' })
+  if (sentinel.value) observer.observe(sentinel.value)
+})
+
+onUnmounted(() => {
+  observer?.disconnect()
+  observer = null
+})
 </script>
 
 <style scoped>
@@ -161,4 +194,5 @@ onMounted(() => load())
 .tag { font-size: 11px; color: var(--color-text-sub); }
 .tip { text-align: center; color: var(--color-text-sub); padding: 40px; }
 .error { color: var(--color-price); }
+.sentinel { text-align: center; color: var(--color-text-sub); padding: 20px 0; font-size: 13px; min-height: 24px; }
 </style>

@@ -11,7 +11,12 @@ import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.Size;
 import java.math.BigDecimal;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -41,19 +46,34 @@ public class ProductController {
         this.userRepository = userRepository;
     }
 
-    /** 在售商品列表，q 非空时按空格拆为多关键词，标题/描述命中任一即返回，标题命中优先排序 */
+    /** 在售商品列表（分页）：q 非空时按空格拆为多关键词，标题/描述命中任一即返回，标题命中优先排序 */
     @GetMapping
-    public List<Product> list(@RequestParam(required = false) String q) {
+    public Map<String, Object> list(@RequestParam(required = false) String q,
+                                    @RequestParam(defaultValue = "0") int page,
+                                    @RequestParam(defaultValue = "20") int size) {
+        int safeSize = Math.min(Math.max(size, 1), 50);
+        Pageable pageable = PageRequest.of(Math.max(page, 0), safeSize);
+        Page<Product> result;
         if (q != null && !q.isBlank()) {
             List<String> keywords = Arrays.stream(q.split("\\s+"))
                     .filter(s -> !s.isBlank())
                     .map(s -> "%" + s + "%")
                     .toList();
             if (!keywords.isEmpty()) {
-                return productRepository.searchMulti("ON_SALE", keywords);
+                result = productRepository.searchMulti("ON_SALE", keywords, pageable);
+            } else {
+                result = productRepository.findByStatusOrderByCreatedAtDesc("ON_SALE", pageable);
             }
+        } else {
+            result = productRepository.findByStatusOrderByCreatedAtDesc("ON_SALE", pageable);
         }
-        return productRepository.findByStatusOrderByCreatedAtDesc("ON_SALE");
+        Map<String, Object> body = new HashMap<>();
+        body.put("content", result.getContent());
+        body.put("totalElements", result.getTotalElements());
+        body.put("page", result.getNumber());
+        body.put("size", result.getSize());
+        body.put("hasMore", result.hasNext());
+        return body;
     }
 
     /** 我发布的商品（需登录） */

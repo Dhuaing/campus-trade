@@ -3,6 +3,8 @@ package com.campus.trade.repository;
 import com.campus.trade.entity.Product;
 import java.util.List;
 import java.util.Optional;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -14,7 +16,7 @@ import org.springframework.data.repository.query.Param;
 public interface ProductRepository extends JpaRepository<Product, Long>, ProductRepositoryCustom {
 
     @EntityGraph(attributePaths = "creator")
-    List<Product> findByStatusOrderByCreatedAtDesc(String status);
+    Page<Product> findByStatusOrderByCreatedAtDesc(String status, Pageable pageable);
 
     @EntityGraph(attributePaths = "creator")
     List<Product> findByCreator_IdOrderByCreatedAtDesc(Long creatorId);

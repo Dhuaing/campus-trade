@@ -4,7 +4,7 @@ import { useWs } from '@/composables/useWs'
 
 const user = ref<UserInfo | null>(null)
 const messageUnread = ref(0)
-const { disconnect } = useWs()
+const { ensureConnected, disconnect } = useWs()
 
 export function useAuth() {
   const isLoggedIn = computed(() => user.value !== null)
@@ -24,6 +24,7 @@ export function useAuth() {
     const res = await apiLogin({ username, password })
     setToken(res.token)
     user.value = res.user
+    ensureConnected()
     await refreshUnread()
     return res.user
   }

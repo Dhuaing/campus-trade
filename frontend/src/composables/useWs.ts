@@ -16,6 +16,7 @@ interface WsPayload {
 }
 
 const socket = ref<WebSocket | null>(null)
+let activeUrl: string | null = null
 let retryTimer: number | null = null
 const handlers = new Set<(data: WsPayload) => void>()
 
@@ -31,9 +32,16 @@ function wsUrl(): string | null {
 function connect() {
   const url = wsUrl()
   if (!url) return
-  if (socket.value && (socket.value.readyState === WebSocket.OPEN || socket.value.readyState === WebSocket.CONNECTING)) {
+  // URL 未变且连接有效：复用；URL（token）已切换：关闭旧连接后按新身份重连
+  if (url === activeUrl && socket.value &&
+      (socket.value.readyState === WebSocket.OPEN || socket.value.readyState === WebSocket.CONNECTING)) {
     return
   }
+  if (socket.value) {
+    try { socket.value.close() } catch { /* noop */ }
+    socket.value = null
+  }
+  activeUrl = url
   try {
     const s = new WebSocket(url)
     socket.value = s
@@ -46,7 +54,10 @@ function connect() {
       }
     }
     s.onclose = () => {
-      if (socket.value === s) socket.value = null
+      if (socket.value === s) {
+        socket.value = null
+        activeUrl = null
+      }
       scheduleReconnect()
     }
     s.onerror = () => {
@@ -80,6 +91,7 @@ export function useWs() {
     if (socket.value) {
       try { socket.value.close() } catch { /* noop */ }
       socket.value = null
+      activeUrl = null
     }
   }
 

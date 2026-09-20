@@ -32,20 +32,8 @@ public class ProductRepositoryImpl implements ProductRepositoryCustom {
         Root<Product> root = cq.from(Product.class);
         root.fetch("creator", JoinType.LEFT);
 
-        // each keyword matches title OR description (case-insensitive)
-        List<Predicate> keywordOr = new ArrayList<>();
         List<Predicate> titleMatches = new ArrayList<>();
-        for (String kw : keywords) {
-            String pattern = kw.toLowerCase();
-            Predicate titleLike = cb.like(cb.lower(root.get("title")), pattern);
-            Predicate descLike = cb.like(cb.lower(root.get("description")), pattern);
-            keywordOr.add(cb.or(titleLike, descLike));
-            titleMatches.add(titleLike);
-        }
-        Predicate keywordPred = cb.or(keywordOr.toArray(new Predicate[0]));
-        Predicate statusPred = cb.equal(root.get("status"), status);
-        Predicate where = cb.and(statusPred, keywordPred);
-        cq.where(where);
+        cq.where(buildWhere(cb, root, status, keywords, titleMatches));
 
         // title hits rank above description-only hits, then newest first
         Predicate anyTitleMatch = cb.or(titleMatches.toArray(new Predicate[0]));
@@ -59,12 +47,31 @@ public class ProductRepositoryImpl implements ProductRepositoryCustom {
                 .setMaxResults(pageable.getPageSize())
                 .getResultList();
 
-        // count query (no fetch join to keep row count correct)
+        // count query: predicates must be rebuilt against its own root (Criteria
+        // predicates are bound to the root they were created from)
         CriteriaQuery<Long> countQ = cb.createQuery(Long.class);
         Root<Product> countRoot = countQ.from(Product.class);
-        countQ.select(cb.count(countRoot)).where(where);
+        countQ.select(cb.count(countRoot))
+                .where(buildWhere(cb, countRoot, status, keywords, new ArrayList<>()));
+
         long total = em.createQuery(countQ).getSingleResult();
 
         return new PageImpl<>(content, pageable, total);
+    }
+
+    /** 生成 status + 多关键词 OR 匹配的 where 条件，titleMatches 输出标题命中项 */
+    private Predicate buildWhere(CriteriaBuilder cb, Root<Product> root, String status,
+                                 List<String> keywords, List<Predicate> titleMatchesOut) {
+        List<Predicate> keywordOr = new ArrayList<>();
+        for (String kw : keywords) {
+            String pattern = kw.toLowerCase();
+            Predicate titleLike = cb.like(cb.lower(root.get("title")), pattern);
+            Predicate descLike = cb.like(cb.lower(root.get("description")), pattern);
+            keywordOr.add(cb.or(titleLike, descLike));
+            titleMatchesOut.add(titleLike);
+        }
+        Predicate keywordPred = cb.or(keywordOr.toArray(new Predicate[0]));
+        Predicate statusPred = cb.equal(root.get("status"), status);
+        return cb.and(statusPred, keywordPred);
     }
 }

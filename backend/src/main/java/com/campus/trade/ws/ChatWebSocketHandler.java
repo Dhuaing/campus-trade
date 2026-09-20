@@ -1,6 +1,7 @@
 package com.campus.trade.ws;
 
 import com.campus.trade.entity.Message;
+import com.campus.trade.entity.User;
 import com.campus.trade.repository.MessageRepository;
 import com.campus.trade.repository.ProductRepository;
 import com.campus.trade.repository.UserRepository;

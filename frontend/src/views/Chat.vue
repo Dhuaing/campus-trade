@@ -44,6 +44,7 @@ import { useWs } from '@/composables/useWs'
 
 const route = useRoute()
 const { user, refreshUnread } = useAuth()
+const { onMessage } = useWs()
 const otherId = Number(route.params.userId)
 const myId = ref<number>(user.value?.id ?? 0)
 const otherName = ref('')

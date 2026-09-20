@@ -17,7 +17,6 @@ interface WsPayload {
 
 const socket = ref<WebSocket | null>(null)
 let retryTimer: number | null = null
-let started = false
 const handlers = new Set<(data: WsPayload) => void>()
 
 function wsUrl(): string | null {
@@ -69,13 +68,11 @@ function scheduleReconnect() {
 export function useWs() {
   /** 登录后调用：确保连接建立 */
   function ensureConnected() {
-    started = true
     if (localStorage.getItem('token')) connect()
   }
 
   /** 退出登录时调用：断开并停止重连 */
   function disconnect() {
-    started = false
     if (retryTimer !== null) {
       clearTimeout(retryTimer)
       retryTimer = null

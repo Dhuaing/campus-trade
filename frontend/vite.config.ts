@@ -2,9 +2,9 @@ import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import { fileURLToPath, URL } from 'node:url'
 
-// Vite 配置：相对路径 + 开发代理
+// Vite 配置：绝对路径（嵌套路由硬导航需要）+ 开发代理
 export default defineConfig({
-  base: './',
+  base: '/',
   plugins: [vue()],
   resolve: {
     alias: {

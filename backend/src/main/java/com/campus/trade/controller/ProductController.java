@@ -117,6 +117,8 @@ public class ProductController {
         product.setCategory(req.category());
         product.setCoverImage(req.coverImage());
         product.setCreator(creator);
+        // 发布后进入待审核状态，管理端审核通过才会上架首页
+        product.setStatus("PENDING_REVIEW");
         Product saved = productRepository.save(product);
         return ResponseEntity.status(HttpStatus.CREATED).body(saved);
     }

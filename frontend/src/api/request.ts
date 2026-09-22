@@ -11,6 +11,7 @@ export interface Product {
   coverImage?: string
   category?: string
   status: string
+  auditRemark?: string | null
   createdAt: string
   creator?: { id: number; nickname?: string } | null
 }

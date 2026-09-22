@@ -129,6 +129,7 @@ async function submit() {
       description: form.description || undefined,
       coverImage: form.coverImage || undefined
     })
+    // 发布后进入待审核状态，审核通过才会在首页展示
     router.push(`/product/${created.id}`)
   } catch (e) {
     error.value = e instanceof Error ? e.message : '发布失败'

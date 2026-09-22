@@ -38,6 +38,7 @@
           <div class="p-info">
             <div class="p-title">{{ p.title }}</div>
             <div class="p-price">¥{{ p.price }}</div>
+            <div v-if="p.status === 'REJECTED' && p.auditRemark" class="p-remark">驳回原因：{{ p.auditRemark }}</div>
           </div>
           <span class="p-status" :class="'st-' + p.status">{{ statusText(p.status) }}</span>
           <button v-if="p.status === 'ON_SALE'" class="btn warn" @click="onSold(p)">已售</button>
@@ -66,7 +67,14 @@ function onLogout() {
 }
 
 function statusText(s: string) {
-  return s === 'ON_SALE' ? '在售' : s === 'SOLD' ? '已售' : '已下架'
+  const map: Record<string, string> = {
+    ON_SALE: '在售',
+    SOLD: '已售',
+    REMOVED: '已下架',
+    PENDING_REVIEW: '待审核',
+    REJECTED: '已驳回'
+  }
+  return map[s] ?? s
 }
 
 async function loadMine() {
@@ -161,8 +169,11 @@ onMounted(loadMine)
 .p-info { flex: 1; min-width: 0; }
 .p-title { font-size: 14px; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .p-price { font-size: 13px; color: var(--color-primary); margin-top: 2px; }
+.p-remark { font-size: 12px; color: #c62828; margin-top: 2px; }
 .p-status { font-size: 12px; padding: 2px 8px; border-radius: 999px; }
 .st-ON_SALE { background: #e8f5e9; color: #2e7d32; }
 .st-SOLD { background: #fff3e0; color: #e65100; }
 .st-REMOVED { background: #f5f5f5; color: #9e9e9e; }
+.st-PENDING_REVIEW { background: #e3f2fd; color: #1565c0; }
+.st-REJECTED { background: #ffebee; color: #c62828; }
 </style>

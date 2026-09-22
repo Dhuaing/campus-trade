@@ -2,6 +2,7 @@ package com.campus.trade.security;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -14,11 +15,12 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
  * Spring Security 配置：
  * - 关闭 CSRF（使用 JWT 而非会话）
  * - 无状态会话
- * - 注册、登录、读取商品、健康检查公开
- * - 发布商品、消息接口需登录
+ * - 注册、登录、读取商品、健康检查、管理端静态资源公开
+ * - /api/admin/** 需登录，具体权限由 @PreAuthorize 方法级控制
  */
 @Configuration
 @EnableWebSecurity
+@EnableMethodSecurity
 public class SecurityConfig {
 
     private final JwtAuthFilter jwtAuthFilter;
@@ -38,6 +40,10 @@ public class SecurityConfig {
                         .requestMatchers("/ws", "/ws/**").permitAll()
                         .requestMatchers("/actuator/health").permitAll()
                         .requestMatchers("/error").permitAll()
+                        // 管理端前端静态资源（登录页与 bundle，接口调用仍需鉴权）
+                        .requestMatchers("/admin", "/admin/", "/admin/**").permitAll()
+                        // 管理端接口：需登录；权限细分见各 Controller @PreAuthorize
+                        .requestMatchers("/api/admin/**").authenticated()
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);

@@ -1,5 +1,7 @@
 package com.campus.trade.security;
 
+import com.campus.trade.entity.User;
+import com.campus.trade.repository.UserRepository;
 import io.jsonwebtoken.Claims;
 import java.util.Map;
 import org.springframework.http.HttpStatus;
@@ -11,15 +13,18 @@ import org.springframework.web.socket.server.HandshakeInterceptor;
 import org.springframework.web.util.UriComponentsBuilder;
 
 /**
- * WebSocket 握手拦截器：从 ?token= 校验 JWT，通过后把 userId 放入会话属性
+ * WebSocket 握手拦截器：从 ?token= 校验 JWT，封禁账号拒绝握手，
+ * 通过后把 userId 放入会话属性
  */
 @Component
 public class WsAuthInterceptor implements HandshakeInterceptor {
 
     private final JwtUtil jwtUtil;
+    private final UserRepository userRepository;
 
-    public WsAuthInterceptor(JwtUtil jwtUtil) {
+    public WsAuthInterceptor(JwtUtil jwtUtil, UserRepository userRepository) {
         this.jwtUtil = jwtUtil;
+        this.userRepository = userRepository;
     }
 
     @Override
@@ -35,7 +40,13 @@ public class WsAuthInterceptor implements HandshakeInterceptor {
         }
         try {
             Claims claims = jwtUtil.parse(token);
-            attributes.put("userId", Long.valueOf(claims.getSubject()));
+            Long userId = Long.valueOf(claims.getSubject());
+            User user = userRepository.findById(userId).orElse(null);
+            if (user == null || user.isBanned()) {
+                response.setStatusCode(HttpStatus.FORBIDDEN);
+                return false;
+            }
+            attributes.put("userId", userId);
             return true;
         } catch (Exception e) {
             response.setStatusCode(HttpStatus.UNAUTHORIZED);

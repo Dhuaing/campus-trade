@@ -44,6 +44,23 @@ public class WsSessionRegistry {
         return set != null && !set.isEmpty();
     }
 
+    /** 关闭该用户所有在线会话并移出注册表（封禁踢线用） */
+    public void closeAll(Long userId) {
+        Set<WebSocketSession> set = online.remove(userId);
+        if (set == null) {
+            return;
+        }
+        for (WebSocketSession s : set) {
+            try {
+                synchronized (s) {
+                    s.close();
+                }
+            } catch (Exception ignored) {
+                // 关闭失败忽略，会话已从注册表移除
+            }
+        }
+    }
+
     /** 向该用户的所有在线会话推送 JSON；失败/关闭的会话被清理 */
     public void push(Long userId, Map<String, Object> payload) {
         Set<WebSocketSession> set = online.get(userId);

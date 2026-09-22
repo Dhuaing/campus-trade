@@ -42,9 +42,13 @@ public class Product {
     @Column(length = 50)
     private String category;
 
-    /** ON_SALE / SOLD / REMOVED */
+    /** ON_SALE / SOLD / REMOVED / PENDING_REVIEW / REJECTED */
     @Column(length = 20)
     private String status = "ON_SALE";
+
+    /** 审核备注：驳回原因 / 强制下架原因 */
+    @Column(name = "audit_remark", length = 255)
+    private String auditRemark;
 
     /** 发布者（可为空，兼容历史数据） */
     @ManyToOne(fetch = FetchType.LAZY)
@@ -80,6 +84,8 @@ public class Product {
     public void setCategory(String category) { this.category = category; }
     public String getStatus() { return status; }
     public void setStatus(String status) { this.status = status; }
+    public String getAuditRemark() { return auditRemark; }
+    public void setAuditRemark(String auditRemark) { this.auditRemark = auditRemark; }
     public User getCreator() { return creator; }
     public void setCreator(User creator) { this.creator = creator; }
     public LocalDateTime getCreatedAt() { return createdAt; }

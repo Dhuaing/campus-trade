@@ -24,4 +24,9 @@ public interface ProductRepository extends JpaRepository<Product, Long>, Product
     @EntityGraph(attributePaths = "creator")
     @Query("SELECT p FROM Product p WHERE p.id = :id")
     Optional<Product> findWithCreatorById(@Param("id") Long id);
+
+    /** 全部状态商品分页（管理端审核列表） */
+    @EntityGraph(attributePaths = "creator")
+    @Query("SELECT p FROM Product p")
+    Page<Product> findAllWithCreator(Pageable pageable);
 }

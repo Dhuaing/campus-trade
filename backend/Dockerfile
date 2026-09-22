@@ -1,4 +1,5 @@
-# Multi-stage build: Maven build -> JRE runtime
+# Multi-stage build
+# F6 redeploy trigger: Maven build -> JRE runtime
 FROM maven:3.9-eclipse-temurin-17 AS builder
 WORKDIR /build
 COPY pom.xml ./

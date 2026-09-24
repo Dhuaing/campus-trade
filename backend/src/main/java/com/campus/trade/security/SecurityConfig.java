@@ -40,6 +40,8 @@ public class SecurityConfig {
                         .requestMatchers("/ws", "/ws/**").permitAll()
                         .requestMatchers("/actuator/health").permitAll()
                         .requestMatchers("/error").permitAll()
+                        // 支付回调（模拟/真实）由第三方调用，公开访问，内部用 paymentNo 验签
+                        .requestMatchers("/api/payments/*/mock-success").permitAll()
                         // 管理端前端静态资源（登录页与 bundle，接口调用仍需鉴权）
                         .requestMatchers("/admin", "/admin/", "/admin/**").permitAll()
                         // 管理端接口：需登录；权限细分见各 Controller @PreAuthorize

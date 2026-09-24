@@ -74,7 +74,7 @@ public class AdminBootstrap {
             }
 
             // 3. 存量用户补授 ROLE_USER + 状态归一化
-            for (User user : userRepository.findAll()) {
+            for (User user : userRepository.findAllWithRoles()) {
                 boolean changed = false;
                 if (!roleRepository.existsByUserId(user.getId())) {
                     user.getRoles().add(userRole);

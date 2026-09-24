@@ -6,8 +6,8 @@ spring:
     name: campus-trade
   datasource:
     url: ${DATABASE_URL:jdbc:postgresql://localhost:5432/campus}
-    username: ${DATABASE_USER:postgres}
-    password: ${DATABASE_PASSWORD:postgres}
+    username: ${DATABASE_USER:${PGUSER:postgres}}
+    password: ${DATABASE_PASSWORD:${PGPASSWORD:postgres}}
     driver-class-name: org.postgresql.Driver
   jpa:
     hibernate:

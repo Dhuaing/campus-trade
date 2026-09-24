@@ -11,6 +11,7 @@ import org.springframework.data.repository.query.Param;
 
 public interface RoleRepository extends JpaRepository<Role, Long> {
 
+    @EntityGraph(attributePaths = "permissions")
     Optional<Role> findByCode(String code);
 
     List<Role> findByCodeIn(Collection<String> codes);
